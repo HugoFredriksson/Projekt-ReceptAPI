@@ -2,6 +2,7 @@
 using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI;
 using MySqlX.XDevAPI.Relational;
+using Projekt_Recept;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Buffers.Text;
 using System.Collections;
@@ -88,8 +89,7 @@ namespace Projekt_Recept.Controllers
                 command.Prepare();
 
                 command.CommandText = "INSERT INTO `recipe` (`Id`, `UserId`, `UserName`, `Title`, `Description`, `ImageUrl`, `TimeStamp`, `Content`) VALUES (@Id, @UserId, @UserName, @Title, @Description, @ImageUrl, (SELECT CURRENT_TIMESTAMP), @Content)";
-                command.Parameters.AddWithValue("@Id", recipe.Id);
-                command.Parameters.AddWithValue("@UserId", recipe.UserId);
+                command.Parameters.AddWithValue("@UserId", recipe.UserId); 
                 command.Parameters.AddWithValue("@UserName", recipe.UserName);
                 command.Parameters.AddWithValue("@Title", recipe.Title);
                 command.Parameters.AddWithValue("@Description", recipe.Description);
@@ -131,3 +131,7 @@ namespace Projekt_Recept.Controllers
         }
     }
 }
+
+// SELECT t1.`Id` AS RecipeId, t1.`UserId`,t1.`Username`,t1.`Title`,.`Description`,t1.`ImageUrl`,.`TimeStamp`,t1.`Content`,t3.`Category` FROM `recipe` t1 LEFT JOIN `user` t2 ON t1.`UserId` = t2.`Id` LEFT JOIN `category` t3 ON t1.`Id` = t3.`RecipeId` ORDER BY t1.`TimeStamp` DESC;
+
+// SELECT t1.`Id` AS RecipeId, t1.`UserId`,t1.`Username`,t1.`Title`,t1.`Description`,t1.`ImageUrl`,t1.`TimeStamp`,t1.`Content`,t3.`CommentId`, t3.`Content` FROM `recipe` t1 LEFT JOIN `user` t2 ON t1.`UserId` = t2.`Id` LEFT JOIN `comment` t3 ON t1.`Id` = t3.`RecipeId` ORDER BY t1.`TimeStamp` DESC;
