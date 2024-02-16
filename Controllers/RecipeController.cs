@@ -1,13 +1,15 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using MySql.Data.MySqlClient;
+using MySqlX.XDevAPI;
+using MySqlX.XDevAPI.Relational;
 using Swashbuckle.AspNetCore.SwaggerGen;
 using System.Buffers.Text;
 using System.Collections;
 using System.Drawing;
 using System.IO;
-using System.Reflection.Metadata;
 using System.Runtime.CompilerServices;
 using System.Text;
+
 
 namespace Projekt_Recept.Controllers
 {
@@ -55,19 +57,18 @@ namespace Projekt_Recept.Controllers
             return StatusCode(200, recipes);
         }
 
-        [HttpPost("CreateRecipe")]
+        [HttpPost("CreateRecipe")] // FUNKAR TYP
         public ActionResult CreateRecipe(Recipe recipe)
         {
             string authorization = Request.Headers["Authorization"];
             User user = (User)UserController.sessionId[authorization];
 
-            const string DIRECTORY = "C:\\Users\\Elev\\source\\repos\\MissensZooAPI\\MissensZooOchBlogg\\images\\";
-            blog.image = blog.image.Split(',')[1];
-            byte[] data = Convert.FromBase64String(blog.image);
-            string randombase64 = generateRandomBase54String();
+            const string DIRECTORY = "C:\\Users\\Elev\\Desktop\\bildertemporär\\";
+            recipe.ImageUrl = recipe.ImageUrl.Split(',')[1];
+            byte[] data = Convert.FromBase64String(recipe.ImageUrl);
+            string randombase64 = generateRandomBase64String();
             string path = randombase64 + ".png";
 
-            //Attempts to create image file
             try
             {
                 System.IO.File.WriteAllBytes(path, data);
@@ -78,7 +79,7 @@ namespace Projekt_Recept.Controllers
                 return StatusCode(500, exception.Message);
             }
 
-            //Attempts to insert blog values into database
+
             try
             {
                 Connection.Open();
@@ -86,15 +87,17 @@ namespace Projekt_Recept.Controllers
                 MySqlCommand command = Connection.CreateCommand();
                 command.Prepare();
 
-                command.CommandText = "INSERT INTO `blogpost` (`title`, `userId`, `content`, `imagePath`, `timestamp`, `category`) VALUES (@title, @userId, @blogContent, @imagePath, (SELECT CURRENT_TIMESTAMP), @category)";
-                command.Parameters.AddWithValue("@title", blog.title);
-                command.Parameters.AddWithValue("@userId", blog.userId);
+                command.CommandText = "INSERT INTO `recipe` (`Id`, `UserId`, `UserName`, `Title`, `Description`, `ImageUrl`, `TimeStamp`, `Content`) VALUES (@Id, @UserId, @UserName, @Title, @Description, @ImageUrl, (SELECT CURRENT_TIMESTAMP), @Content)";
+                command.Parameters.AddWithValue("@Id", recipe.Id);
+                command.Parameters.AddWithValue("@UserId", recipe.UserId);
+                command.Parameters.AddWithValue("@UserName", recipe.UserName);
+                command.Parameters.AddWithValue("@Title", recipe.Title);
+                command.Parameters.AddWithValue("@Description", recipe.Description);
                 command.Parameters.AddWithValue("@imagePath", path);
-                command.Parameters.AddWithValue("@blogContent", blog.content);
-                command.Parameters.AddWithValue("@category", blog.category);
+                command.Parameters.AddWithValue("@Content", recipe.Content);
+
                 int rows = command.ExecuteNonQuery();
 
-                //If rows of values are 0 deletes image and returns error message
                 if (rows == 0)
                 {
                     System.IO.File.Delete(path);
@@ -105,13 +108,26 @@ namespace Projekt_Recept.Controllers
             }
             catch (Exception exception)
             {
-                //If insertion into database fails deletes image and returns 500 Internal Server Error
                 System.IO.File.Delete(path);
                 Connection.Close();
                 return StatusCode(500, exception.Message);
             }
             Connection.Close();
             return StatusCode(201, "lyckades skapa Blog");
+        }
+        static string generateRandomBase64String()
+        {
+
+            byte[] randomBytes = new byte[5];
+            new Random().NextBytes(randomBytes);
+
+            // Convert the random bytes to Base64
+            string randomBase64 = Convert.ToBase64String(randomBytes);
+
+            // Ensure the string has the desired length
+
+
+            return randomBase64.Substring(0, 5);
         }
     }
 }
