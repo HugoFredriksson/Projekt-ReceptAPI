@@ -9,5 +9,6 @@ namespace Projekt_Recept
         public int RecipeId { get; set; }
         public string TimeStamp { get; set; }
         public string Content { get; set; }
+        
     }
 }

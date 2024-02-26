@@ -9,7 +9,9 @@ using System.Collections;
 using System.Drawing;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using System.Xml.Linq;
 
 
 namespace Projekt_Recept.Controllers
@@ -30,7 +32,7 @@ namespace Projekt_Recept.Controllers
                 Connection.Open();
                 MySqlCommand command = Connection.CreateCommand();
                 command.Prepare();
-                command.CommandText = "SELECT t1.`Id`, t1.`UserId`, t1.`Username`, t1.`Title`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content` FROM `recipe` t1 LEFT JOIN  `user` t2 ON t1.Id = t2.Id;;";
+                command.CommandText = "SELECT * FROM `Recipe` ORDER BY TimeStamp";
                 MySqlDataReader data = command.ExecuteReader();
 
                 while (data.Read())
@@ -57,6 +59,8 @@ namespace Projekt_Recept.Controllers
             Connection.Close();
             return StatusCode(200, recipes);
         }
+
+        
 
         [HttpPost("CreateRecipe")] // FUNKAR TYP
         public ActionResult CreateRecipe(Recipe recipe)
@@ -132,6 +136,8 @@ namespace Projekt_Recept.Controllers
     }
 }
 
-// SELECT t1.`Id` AS RecipeId, t1.`UserId`,t1.`Username`,t1.`Title`,.`Description`,t1.`ImageUrl`,.`TimeStamp`,t1.`Content`,t3.`Category` FROM `recipe` t1 LEFT JOIN `user` t2 ON t1.`UserId` = t2.`Id` LEFT JOIN `category` t3 ON t1.`Id` = t3.`RecipeId` ORDER BY t1.`TimeStamp` DESC;
+//SELECT t1.`Id` AS RecipeId, t1.`UserId`,t1.`Username`,t1.`Title`,.`Description`,t1.`ImageUrl`,.`TimeStamp`,t1.`Content`,t3.`Category` FROM `recipe` t1 LEFT JOIN `user` t2 ON t1.`UserId` = t2.`Id` LEFT JOIN `category` t3 ON t1.`Id` = t3.`RecipeId` ORDER BY t1.`TimeStamp` DESC;
 
 // SELECT t1.`Id` AS RecipeId, t1.`UserId`,t1.`Username`,t1.`Title`,t1.`Description`,t1.`ImageUrl`,t1.`TimeStamp`,t1.`Content`,t3.`CommentId`, t3.`Content` FROM `recipe` t1 LEFT JOIN `user` t2 ON t1.`UserId` = t2.`Id` LEFT JOIN `comment` t3 ON t1.`Id` = t3.`RecipeId` ORDER BY t1.`TimeStamp` DESC;
+
+// HÄMTAR RECEPT BEROENDE PÅ ID ;-3 SELECT * FROM recipe t1 LEFT JOIN comment t2 ON t1.Id = t2.RecipeId WHERE t1.Id = @Id
