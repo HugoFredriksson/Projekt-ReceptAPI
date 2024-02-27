@@ -65,7 +65,29 @@ namespace Projekt_Recept.Controllers
             }
             return StatusCode(400);
         }
+        
 
+        [HttpDelete("DeleteUser")]
+        public ActionResult DeleteUser(User user)
+        {
+            try
+            {
+                Connection.Open();
+                MySqlCommand command = Connection.CreateCommand();
+                command.Prepare();
+                command.CommandText = "DELETE FROM user WHERE id = @id";
+                command.Parameters.AddWithValue("id", user.id);
+                command.ExecuteNonQuery();
+
+                Connection.Close();
+                return StatusCode(200, $"Lyckades ta bort användare, AnvändarId = {user.id} ");
+            }
+            catch (Exception exception)
+            {
+                Connection.Close();
+                return StatusCode(500, exception.Message);
+            }
+        }
         [HttpGet("LogIn")]
         public ActionResult LogIn() // FUNKAR TYP :-)
         {

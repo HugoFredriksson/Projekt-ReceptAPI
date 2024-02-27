@@ -12,6 +12,5 @@ namespace Projekt_Recept
             public string ImageUrl { get; set; } = string.Empty; 
             public string TimeStamp { get; set; } = string.Empty;
             public string Content { get; set; } = string.Empty;
-            public List<Comment> Comments { get; set; } = new List<Comment>();
         }
     }
