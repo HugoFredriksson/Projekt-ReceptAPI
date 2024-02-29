@@ -33,23 +33,25 @@ namespace Projekt_Recept.Controllers
                 Connection.Open();
                 MySqlCommand command = Connection.CreateCommand();
                 command.Prepare();
-                command.CommandText = "SELECT * FROM `Recipe` ORDER BY TimeStamp";
+                command.CommandText = "SELECT t1.`Id` AS RecipeId, t1.`UserId`, t1.`Username`, t1.`Title`, GROUP_CONCAT(DISTINCT t3.`category` SEPARATOR ', ') AS Categories, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content`, COALESCE(t4.LikeCount, 0) AS LikeCount FROM `recipe` t1 LEFT JOIN `category` t3 ON t1.`Id` = t3.`RecipeId` LEFT JOIN (SELECT `RecipeId`, COUNT(`RecipeId`) AS LikeCount FROM `Likes` GROUP BY  `RecipeId`) t4 ON t1.`Id` = t4.`RecipeId` GROUP BY t1.`Id`, t1.`UserId`, t1.`Username`, t1.`Title`, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`,  t1.`TimeStamp`, t1.`Content` ORDER BY t1.`TimeStamp` DESC";
                 MySqlDataReader data = command.ExecuteReader();
 
                 while (data.Read())
                 {
                     Recipe recipe = new Recipe();
-                    recipe.Id = data.GetInt32("Id");
+                    recipe.Id = data.GetInt32("RecipeId");
                     recipe.UserId = data.GetInt32("UserId");
-                    recipe.UserName = data.GetString("UserName");
+                    recipe.UserName = data.GetString("Username");
                     recipe.Title = data.GetString("Title");
+                    recipe.Categories = data.GetString("Categories");
+                    recipe.Ingredients = data.GetString("Ingredients");
                     recipe.Description = data.GetString("Description");
                     recipe.ImageUrl = data.GetString("ImageUrl");
                     recipe.TimeStamp = data.GetString("TimeStamp");
                     recipe.Content = data.GetString("Content");
+                    recipe.LikeCount = data.GetInt32("LikeCount");
 
                     recipes.Add(recipe);
-
                 }
             }
             catch (Exception ex)
@@ -70,7 +72,7 @@ namespace Projekt_Recept.Controllers
                 Connection.Open();
                 MySqlCommand query = Connection.CreateCommand();
                 query.Prepare();
-                query.CommandText = "SELECT * FROM recipe WHERE Id = @Id;";
+                query.CommandText = "SELECT t1.`Id` AS RecipeId, t1.`UserId`, t1.`Username`, t1.`Title`, GROUP_CONCAT(DISTINCT t3.`category` SEPARATOR ', ') AS Categories, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content`, COALESCE(t4.LikeCount, 0) AS LikeCount FROM `recipe` t1 LEFT JOIN `category` t3 ON t1.`Id` = t3.`RecipeId` LEFT JOIN (SELECT `RecipeId`, COUNT(`RecipeId`) AS LikeCount FROM `Likes` GROUP BY  `RecipeId`) t4 ON t1.`Id` = t4.`RecipeId` WHERE t1.`Id` = @Id GROUP BY t1.`Id`, t1.`UserId`, t1.`Username`, t1.`Title`, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content` ORDER BY t1.`TimeStamp` DESC;";
                 query.Parameters.AddWithValue("@Id", Id);
                 MySqlDataReader data = query.ExecuteReader();
 
