@@ -33,7 +33,7 @@ namespace Projekt_Recept.Controllers
                 Connection.Open();
                 MySqlCommand command = Connection.CreateCommand();
                 command.Prepare();
-                command.CommandText = "SELECT t1.`Id` AS RecipeId, t1.`UserId`, t1.`Username`, t1.`Title`, GROUP_CONCAT(DISTINCT t3.`category` SEPARATOR ', ') AS Categories, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content`, COALESCE(t4.LikeCount, 0) AS LikeCount FROM `recipe` t1 LEFT JOIN `category` t3 ON t1.`Id` = t3.`RecipeId` LEFT JOIN (SELECT `RecipeId`, COUNT(`RecipeId`) AS LikeCount FROM `Likes` GROUP BY  `RecipeId`) t4 ON t1.`Id` = t4.`RecipeId` GROUP BY t1.`Id`, t1.`UserId`, t1.`Username`, t1.`Title`, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`,  t1.`TimeStamp`, t1.`Content` ORDER BY t1.`TimeStamp` DESC";
+                command.CommandText = "SELECT t1.`Id`, t1.`UserId`, t1.`UserName`, `Title`, `Description`,`Ingredients`, `ImageUrl`, `TimeStamp`, `Content` FROM `recipe` t1 LEFT JOIN `user` t2 ON t1.UserId = t2.id";
                 MySqlDataReader data = command.ExecuteReader();
 
                 while (data.Read())
@@ -43,25 +43,128 @@ namespace Projekt_Recept.Controllers
                     recipe.UserId = data.GetInt32("UserId");
                     recipe.UserName = data.GetString("Username");
                     recipe.Title = data.GetString("Title");
-                    recipe.Categories = data.GetString("Categories");
-                    recipe.Ingredients = data.GetString("Ingredients");
                     recipe.Description = data.GetString("Description");
+                    recipe.Ingredients = data.GetString("Ingredients");
                     recipe.ImageUrl = data.GetString("ImageUrl");
                     recipe.TimeStamp = data.GetString("TimeStamp");
                     recipe.Content = data.GetString("Content");
-                    recipe.LikeCount = data.GetInt32("LikeCount");
-
                     recipes.Add(recipe);
                 }
+                data.Close();
+
+                foreach (Recipe recipe in recipes)
+                {
+                    recipe.comments = GetComments(recipe.Id);
+                    recipe.categories = GetCategories(recipe.Id);
+                    //recipe.LikeCount = GetLikes(recipe);
+                }
+
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
                 Connection.Close();
-                return StatusCode(500, ex.Message);
+                return StatusCode(500, exception.Message);
             }
             Connection.Close();
             return StatusCode(200, recipes);
         }
+
+        private List<Comment> GetComments(int RecipeId)
+        {
+            List<Comment> comments = new List<Comment>();
+           
+            try
+            {
+                MySqlCommand command = Connection.CreateCommand();
+                command.Prepare();
+                command.CommandText = "SELECT * FROM comments WHERE RecipeId = @RecipeId";
+                command.Parameters.AddWithValue("@RecipeId", RecipeId);
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    Comment comment = new Comment();
+                    comment.UserId = reader.GetUInt16("UserId");
+                    comment.RecipeId = reader.GetUInt16("RecipeId");
+                    comment.Content = reader.GetString("Content");
+                    comments.Add(comment);
+                }
+                reader.Close();
+
+                foreach(Comment comment in comments)
+                {
+                    comment.UserName = UserName(comment.UserId);
+                }
+
+                return comments;
+            }
+            catch(Exception exception)
+            {
+                Console.WriteLine($"Gick inte att hämta kommentar! fel:{exception.Message}");
+                return comments;
+            }
+        }
+
+        public string UserName(int id)
+        {
+            User user = new User();
+            try
+            {
+          
+
+                MySqlCommand command = Connection.CreateCommand();
+                command.Prepare();
+                command.CommandText = "SELECT UserName FROM user WHERE id = @id";
+                command.Parameters.AddWithValue("@id", id);
+                MySqlDataReader reader = command.ExecuteReader();
+
+                reader.Read();
+
+                user.UserName = reader.GetString("UserName");
+                reader.Close();
+
+                return user.UserName;
+
+
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("Fel inträffade, kunde inte hämta användarnamn" + exception.Message);
+                return user.UserName;
+            }
+        }
+
+        private List<Category> GetCategories(int RecipeId)
+        {
+            List<Category> categories = new List<Category>(); 
+            try
+            {
+                MySqlCommand command = Connection.CreateCommand();
+                command.Prepare();
+                command.CommandText = "SELECT * FROM category WHERE RecipeId = @RecipeId";
+                command.Parameters.AddWithValue("@RecipeId", RecipeId);
+                MySqlDataReader reader = command.ExecuteReader();
+
+                while (reader.Read())
+                {
+                    Category category = new Category();
+                    category.Id = reader.GetInt32("Id");
+                    category.RecipeId = reader.GetInt16("RecipeId");
+                    category.Categories = reader.GetString("category");
+
+                    categories.Add(category);
+                }
+                reader.Close();
+
+                
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine($"Gick inte att hämta kategorier! fel{exception.Message}");
+            } return categories;
+        }
+
+
 
         [HttpGet("{Id}")]
         public ActionResult<Recipe> GetRecipeFromId(int Id)
@@ -72,7 +175,7 @@ namespace Projekt_Recept.Controllers
                 Connection.Open();
                 MySqlCommand query = Connection.CreateCommand();
                 query.Prepare();
-                query.CommandText = "SELECT t1.`Id` AS RecipeId, t1.`UserId`, t1.`Username`, t1.`Title`, GROUP_CONCAT(DISTINCT t3.`category` SEPARATOR ', ') AS Categories, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content`, COALESCE(t4.LikeCount, 0) AS LikeCount FROM `recipe` t1 LEFT JOIN `category` t3 ON t1.`Id` = t3.`RecipeId` LEFT JOIN (SELECT `RecipeId`, COUNT(`RecipeId`) AS LikeCount FROM `Likes` GROUP BY  `RecipeId`) t4 ON t1.`Id` = t4.`RecipeId` WHERE t1.`Id` = @Id GROUP BY t1.`Id`, t1.`UserId`, t1.`Username`, t1.`Title`, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content` ORDER BY t1.`TimeStamp` DESC;";
+                query.CommandText = "SELECT t1.`Id` AS RecipeId, t1.`UserId`, t1.`UserName`, t1.`Title`, GROUP_CONCAT(DISTINCT t3.`category` SEPARATOR ', ') AS Categories, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content`, COALESCE(t4.LikeCount, 0) AS LikeCount FROM `recipe` t1 LEFT JOIN `category` t3 ON t1.`Id` = t3.`RecipeId` LEFT JOIN (SELECT `RecipeId`, COUNT(`RecipeId`) AS LikeCount FROM `Likes` GROUP BY  `RecipeId`) t4 ON t1.`Id` = t4.`RecipeId` WHERE t1.`Id` = @Id GROUP BY t1.`Id`, t1.`UserId`, t1.`Username`, t1.`Title`, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content` ORDER BY t1.`TimeStamp` DESC;";
                 query.Parameters.AddWithValue("@Id", Id);
                 MySqlDataReader data = query.ExecuteReader();
 
@@ -94,7 +197,7 @@ namespace Projekt_Recept.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, "Something went wrong!");
+                return StatusCode(500, ex.Message);
             }
             return Ok(recipe);
         }
@@ -110,28 +213,28 @@ namespace Projekt_Recept.Controllers
                 command.CommandText = "DELETE FROM recipe WHERE Id = @Id ";
                 command.Parameters.AddWithValue("Id", recipe.Id);
                 command.ExecuteNonQuery();
-
-                Connection.Close();
-                return StatusCode(200, $"Lyckades ta bort Recept, ReceptId = {recipe.Id} ");
             }
             catch (Exception exception)
             {
                 Connection.Close();
                 return StatusCode(500, exception.Message);
             }
+            Connection.Close();
+            return StatusCode(200, $"Lyckades ta bort Recept, ReceptId = {recipe.Id} ");
         }
+
         [HttpPut("UpdateRecipe")] 
         public ActionResult UpdateRecipe(Recipe recipe)
         {
-           try
-           {
-               Connection.Open();
+            try
+            {
+                Connection.Open();
 
-               MySqlCommand command = Connection.CreateCommand();
-               command.Prepare();
-               command.CommandText = "UPDATE `recipe` SET `UserId`= @UserId,`UserName`=@UserName,`Title`= @Title,`Description`= @Description,`ImageUrl`= @ImageUrl, `TimeStamp`=(SELECT CURRENT_TIMESTAMP),`Content`= @Content WHERE Id = @Id";
-               
-               command.Parameters.AddWithValue("UserId", recipe.UserId);
+                MySqlCommand command = Connection.CreateCommand();
+                command.Prepare();
+                command.CommandText = "UPDATE `recipe` SET `UserId`= @UserId,`UserName`= @UserName,`Title`= @Title,`Description`= @Description,`ImageUrl`= @ImageUrl, `TimeStamp`=(SELECT CURRENT_TIMESTAMP),`Content`= @Content WHERE Id = @Id";
+
+                command.Parameters.AddWithValue("UserId", recipe.UserId);
                 command.Parameters.AddWithValue("UserName", recipe.UserName);
                 command.Parameters.AddWithValue("Title", recipe.Title);
                 command.Parameters.AddWithValue("Description", recipe.Description);
@@ -148,64 +251,64 @@ namespace Projekt_Recept.Controllers
             return StatusCode(200, recipe);
         }
         [HttpPost("CreateRecipe")] // FUNKAR TYP
-            public ActionResult CreateRecipe(Recipe recipe)
+        public ActionResult CreateRecipe(Recipe recipe)
+        {
+            string authorization = Request.Headers["Authorization"];
+            User user = (User)UserController.sessionId[authorization];
+
+            const string DIRECTORY = "C:\\Users\\Elev\\Desktop\\bildertemporär\\";
+            recipe.ImageUrl = recipe.ImageUrl.Split(',')[1];
+            byte[] data = Convert.FromBase64String(recipe.ImageUrl);
+            string randombase64 = generateRandomBase64String();
+            string path = DIRECTORY + randombase64 + ".png";
+
+            try
             {
-                string authorization = Request.Headers["Authorization"];
-                User user = (User)UserController.sessionId[authorization];
+                System.IO.File.WriteAllBytes(path, data);
+            }
+            catch (Exception exception)
+            {
+                return StatusCode(500, exception.Message);
+            }
 
-                const string DIRECTORY = "C:\\Users\\Elev\\Desktop\\bildertemporär\\";
-                recipe.ImageUrl = recipe.ImageUrl.Split(',')[1];
-                byte[] data = Convert.FromBase64String(recipe.ImageUrl);
-                string randombase64 = generateRandomBase64String();
-                string path = randombase64 + ".png";
+            try
+            {
+                Connection.Open();
+                string userHeader = Request.Headers["Authorization"];
+                MySqlCommand command = Connection.CreateCommand();
+                command.Prepare();
 
-                try
-                {
-                    System.IO.File.WriteAllBytes(path, data);
-                }
-                catch (Exception exception)
-                {
-                    Connection.Close();
-                    return StatusCode(500, exception.Message);
-                }
+                command.CommandText = "INSERT INTO `recipe` (`Id`, `UserId`, `UserName`, `Title`, `Description`, `ImageUrl`, `TimeStamp`, `Content`) VALUES (@Id, @UserId, @UserName, @Title, @Description, @ImageUrl, (SELECT CURRENT_TIMESTAMP), @Content)";
+                command.Parameters.AddWithValue("@UserId", recipe.UserId);
+                command.Parameters.AddWithValue("@UserName", recipe.UserName);
+                command.Parameters.AddWithValue("@Title", recipe.Title);
+                command.Parameters.AddWithValue("@Description", recipe.Description);
+                command.Parameters.AddWithValue("@imagePath", path);
+                command.Parameters.AddWithValue("@Content", recipe.Content);
 
-                try
-                {
-                    Connection.Open();
-                    string userHeader = Request.Headers["Authorization"];
-                    MySqlCommand command = Connection.CreateCommand();
-                    command.Prepare();
+                int rows = command.ExecuteNonQuery();
 
-                    command.CommandText = "INSERT INTO `recipe` (`Id`, `UserId`, `UserName`, `Title`, `Description`, `ImageUrl`, `TimeStamp`, `Content`) VALUES (@Id, @UserId, @UserName, @Title, @Description, @ImageUrl, (SELECT CURRENT_TIMESTAMP), @Content)";
-                    command.Parameters.AddWithValue("@UserId", recipe.UserId); 
-                    command.Parameters.AddWithValue("@UserName", recipe.UserName);
-                    command.Parameters.AddWithValue("@Title", recipe.Title);
-                    command.Parameters.AddWithValue("@Description", recipe.Description);
-                    command.Parameters.AddWithValue("@imagePath", path);
-                    command.Parameters.AddWithValue("@Content", recipe.Content);
-
-                    int rows = command.ExecuteNonQuery();
-
-                    if (rows == 0)
-                    {
-                        System.IO.File.Delete(path);
-                        Connection.Close();
-                        return StatusCode(500, "Image rows was zero");
-                    }
-
-                }
-                catch (Exception exception)
+                if (rows == 0)
                 {
                     System.IO.File.Delete(path);
                     Connection.Close();
-                    return StatusCode(500, exception.Message);
+                    return StatusCode(500, "Image rows was zero");
                 }
-                Connection.Close();
-                return StatusCode(201, "Lyckades Skapa Recept");
+
             }
+            catch (Exception exception)
+            {
+                System.IO.File.Delete(path);
+                Connection.Close();
+                return StatusCode(500, exception.Message);
+            }
+            Connection.Close();
+            return StatusCode(201, "Lyckades Skapa Recept");
+        }
+
         static string generateRandomBase64String()
         {
-
+                
             byte[] randomBytes = new byte[5];
             new Random().NextBytes(randomBytes);
 
