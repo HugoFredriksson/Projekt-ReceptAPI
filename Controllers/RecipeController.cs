@@ -39,7 +39,7 @@ namespace Projekt_Recept.Controllers
                 while (data.Read())
                 {
                     Recipe recipe = new Recipe();
-                    recipe.Id = data.GetInt32("RecipeId");
+                    recipe.Id = data.GetInt32("Id");
                     recipe.UserId = data.GetInt32("UserId");
                     recipe.UserName = data.GetString("Username");
                     recipe.Title = data.GetString("Title");
@@ -69,6 +69,33 @@ namespace Projekt_Recept.Controllers
             return StatusCode(200, recipes);
         }
 
+        private string UserName(int id)
+        {
+            User user = new User();
+            try
+            {
+
+                MySqlCommand command = Connection.CreateCommand();
+                command.Prepare();
+                command.CommandText = "SELECT UserName FROM user WHERE id = @id";
+                command.Parameters.AddWithValue("@id", id);
+                MySqlDataReader reader = command.ExecuteReader();
+
+                reader.Read();
+
+                user.UserName = reader.GetString("UserName");
+                reader.Close();
+
+                return user.UserName;
+
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("Fel inträffade, kunde inte hämta användarnamn" + exception.Message);
+                return user.UserName;
+            }
+        }
+
         private List<Comment> GetComments(int RecipeId)
         {
             List<Comment> comments = new List<Comment>();
@@ -84,8 +111,10 @@ namespace Projekt_Recept.Controllers
                 while (reader.Read())
                 {
                     Comment comment = new Comment();
+                    comment.CommentId = reader.GetUInt16("CommentId");
                     comment.UserId = reader.GetUInt16("UserId");
                     comment.RecipeId = reader.GetUInt16("RecipeId");
+                    comment.TimeStamp = reader.GetString("TimeStamp");
                     comment.Content = reader.GetString("Content");
                     comments.Add(comment);
                 }
@@ -105,34 +134,7 @@ namespace Projekt_Recept.Controllers
             }
         }
 
-        public string UserName(int id)
-        {
-            User user = new User();
-            try
-            {
-          
-
-                MySqlCommand command = Connection.CreateCommand();
-                command.Prepare();
-                command.CommandText = "SELECT UserName FROM user WHERE id = @id";
-                command.Parameters.AddWithValue("@id", id);
-                MySqlDataReader reader = command.ExecuteReader();
-
-                reader.Read();
-
-                user.UserName = reader.GetString("UserName");
-                reader.Close();
-
-                return user.UserName;
-
-
-            }
-            catch (Exception exception)
-            {
-                Console.WriteLine("Fel inträffade, kunde inte hämta användarnamn" + exception.Message);
-                return user.UserName;
-            }
-        }
+        
 
         private List<Category> GetCategories(int RecipeId)
         {
@@ -150,7 +152,7 @@ namespace Projekt_Recept.Controllers
                     Category category = new Category();
                     category.Id = reader.GetInt32("Id");
                     category.RecipeId = reader.GetInt16("RecipeId");
-                    category.Categories = reader.GetString("category");
+                    category.Categories = reader.GetString("Category");
 
                     categories.Add(category);
                 }
@@ -163,8 +165,6 @@ namespace Projekt_Recept.Controllers
                 Console.WriteLine($"Gick inte att hämta kategorier! fel{exception.Message}");
             } return categories;
         }
-
-
 
         [HttpGet("{Id}")]
         public ActionResult<Recipe> GetRecipeFromId(int Id)
@@ -253,8 +253,8 @@ namespace Projekt_Recept.Controllers
         [HttpPost("CreateRecipe")] // FUNKAR TYP
         public ActionResult CreateRecipe(Recipe recipe)
         {
-            string authorization = Request.Headers["Authorization"];
-            User user = (User)UserController.sessionId[authorization];
+            //string authorization = Request.Headers["Authorization"];
+            //User user = (User)UserController.sessionId[authorization];
 
             const string DIRECTORY = "C:\\Users\\Elev\\Desktop\\bildertemporär\\";
             recipe.ImageUrl = recipe.ImageUrl.Split(',')[1];

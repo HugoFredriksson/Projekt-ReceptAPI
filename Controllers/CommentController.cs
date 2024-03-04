@@ -41,10 +41,10 @@ namespace Projekt_Recept.Controllers
                 {
                     Comment comment = new Comment();
 
-                    comment.Id = data.GetInt32("CommentId");
+                    comment.CommentId = data.GetInt32("CommentId");
                     comment.UserId = data.GetInt32("UserId");
                     comment.RecipeId = data.GetInt32("RecipeId");
-                    comment.TimeStamp = data.GetDateTime("Timestamp");
+                    comment.TimeStamp = data.GetString("Timestamp");
                     comment.Content = data.GetString("Content");
 
                     comments.Add(comment);
@@ -66,11 +66,11 @@ namespace Projekt_Recept.Controllers
                 MySqlCommand command = Connection.CreateCommand();
                 command.Prepare();
                 command.CommandText = "DELETE FROM comment WHERE CommentId = @CommentId";
-                command.Parameters.AddWithValue("CommentId", comment.Id);
+                command.Parameters.AddWithValue("CommentId", comment.CommentId);
                 command.ExecuteNonQuery();
 
                 Connection.Close();
-                return StatusCode(200, $"Lyckades ta bort kommentar, KommentarId = {comment.Id} ");
+                return StatusCode(200, $"Lyckades ta bort kommentar, KommentarId = {comment.CommentId} ");
             }
             catch (Exception exception)
             {
