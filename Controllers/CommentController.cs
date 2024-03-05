@@ -46,6 +46,7 @@ namespace Projekt_Recept.Controllers
                     comment.RecipeId = data.GetInt32("RecipeId");
                     comment.TimeStamp = data.GetString("Timestamp");
                     comment.Content = data.GetString("Content");
+                    comment.UserName = data.GetString("UserName");
 
                     comments.Add(comment);
                 }

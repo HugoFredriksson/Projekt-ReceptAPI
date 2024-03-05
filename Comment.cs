@@ -7,8 +7,8 @@ namespace Projekt_Recept
         public int CommentId { get; set; }
         public int UserId { get; set; }
         public int RecipeId { get; set; }
-        public string TimeStamp { get; set; }
-        public string Content { get; set; }
+        public string TimeStamp { get; set; } = string.Empty;
+        public string Content { get; set; } = string.Empty;
         public string UserName { get; set; } = string.Empty;
         
     }

@@ -251,14 +251,14 @@ namespace Projekt_Recept.Controllers
             return StatusCode(200, recipe);
         }
         [HttpPost("CreateRecipe")] // FUNKAR TYP
-        public ActionResult CreateRecipe(Recipe recipe)
+        public ActionResult CreateRecipe(PostRecipe recipe)
         {
             //string authorization = Request.Headers["Authorization"];
             //User user = (User)UserController.sessionId[authorization];
 
-            const string DIRECTORY = "C:\\Users\\Elev\\Desktop\\bildertemporär\\";
-            recipe.ImageUrl = recipe.ImageUrl.Split(',')[1];
-            byte[] data = Convert.FromBase64String(recipe.ImageUrl);
+            const string DIRECTORY = "C:\\Users\\Elev\\source\\repos\\Recept-Projekt\\src\\recipeImage\\";
+            recipe.imageUrl = recipe.imageUrl.Split(',')[1];
+            byte[] data = Convert.FromBase64String(recipe.imageUrl);
             string randombase64 = generateRandomBase64String();
             string path = DIRECTORY + randombase64 + ".png";
 
@@ -278,13 +278,12 @@ namespace Projekt_Recept.Controllers
                 MySqlCommand command = Connection.CreateCommand();
                 command.Prepare();
 
-                command.CommandText = "INSERT INTO `recipe` (`Id`, `UserId`, `UserName`, `Title`, `Description`, `ImageUrl`, `TimeStamp`, `Content`) VALUES (@Id, @UserId, @UserName, @Title, @Description, @ImageUrl, (SELECT CURRENT_TIMESTAMP), @Content)";
-                command.Parameters.AddWithValue("@UserId", recipe.UserId);
-                command.Parameters.AddWithValue("@UserName", recipe.UserName);
-                command.Parameters.AddWithValue("@Title", recipe.Title);
-                command.Parameters.AddWithValue("@Description", recipe.Description);
-                command.Parameters.AddWithValue("@imagePath", path);
-                command.Parameters.AddWithValue("@Content", recipe.Content);
+                command.CommandText = "INSERT INTO `recipe` (`Title`, `Description`, `Ingredients`, `imageUrl`, `TimeStamp`, `Content`) VALUES (@Title, @Description, @Ingredients, @imageUrl, (SELECT CURRENT_TIMESTAMP), @Content)";
+                command.Parameters.AddWithValue("@Title", recipe.title);
+                command.Parameters.AddWithValue("@Description", recipe.description);
+                command.Parameters.AddWithValue("@Ingredients", recipe.ingredients);
+                command.Parameters.AddWithValue("@imageUrl", recipe.imageUrl);
+                command.Parameters.AddWithValue("@Content", recipe.content);
 
                 int rows = command.ExecuteNonQuery();
 
