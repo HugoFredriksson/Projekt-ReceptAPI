@@ -256,7 +256,7 @@ namespace Projekt_Recept.Controllers
             //string authorization = Request.Headers["Authorization"];
             //User user = (User)UserController.sessionId[authorization];
 
-            const string DIRECTORY = "C:\\Users\\Elev\\source\\repos\\Recept-Projekt\\src\\recipeImage\\";
+            const string DIRECTORY = "C:\\Users\\Elev\\source\\repos\\Recept-Projekt\\public\\recipeImage\\";
             recipe.imageUrl = recipe.imageUrl.Split(',')[1];
             byte[] data = Convert.FromBase64String(recipe.imageUrl);
             string randombase64 = generateRandomBase64String();
@@ -282,7 +282,7 @@ namespace Projekt_Recept.Controllers
                 command.Parameters.AddWithValue("@Title", recipe.title);
                 command.Parameters.AddWithValue("@Description", recipe.description);
                 command.Parameters.AddWithValue("@Ingredients", recipe.ingredients);
-                command.Parameters.AddWithValue("@imageUrl", recipe.imageUrl);
+                command.Parameters.AddWithValue("@imageUrl", randombase64);
                 command.Parameters.AddWithValue("@Content", recipe.content);
 
                 int rows = command.ExecuteNonQuery();
