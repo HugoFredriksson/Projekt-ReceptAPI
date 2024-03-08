@@ -27,8 +27,8 @@ namespace Projekt_Recept.Controllers
         [HttpPost("AddCategoryToRecipe")]
         public ActionResult AddCategoryToRecipe(Category category)
         {
-            string authorization = Request.Headers["Authorization"];
-            User user = (User)UserController.sessionId[authorization];
+            //string authorization = Request.Headers["Authorization"];
+            //User user = (User)UserController.sessionId[authorization];
 
             try
             {

@@ -112,7 +112,7 @@ namespace Projekt_Recept.Controllers
                     user.Email = data.GetString("Email");
                     user.Role = data.GetInt32("Role");
                 }
-
+                Console.WriteLine(user.Password + " Användarnamn");
                 if (passwordHash != string.Empty && BCrypt.Net.BCrypt.Verify(user.Password, passwordHash))
                 {
                     Guid guid = Guid.NewGuid();
@@ -132,6 +132,31 @@ namespace Projekt_Recept.Controllers
                 Console.WriteLine($"Login failed: {exception.Message}");
                 return StatusCode(500);
             }
+        }
+
+        [HttpGet("VerifyRole")]
+        public ActionResult VerifyRole()
+        {
+            string auth = this.HttpContext.Request.Headers["Authorization"];
+
+            if (auth == null || !UserController.sessionId.ContainsKey(auth))
+            {
+                return StatusCode(403, "0");
+            }
+            User user = (User)UserController.sessionId[auth];
+            return StatusCode(200, user.Role);
+        }
+
+        [HttpGet("VerifyUserId")]
+        public ActionResult VerifyUserId()
+        {
+            string auth = this.HttpContext.Request.Headers["Authorization"];
+            if (auth == null || !UserController.sessionId.ContainsKey(auth))
+            {
+                return StatusCode(403, "0");
+            }
+            User user = (User)UserController.sessionId[auth];
+            return StatusCode(200, user.id);
         }
 
         private string CheckIfUniqueUserDataExists(User user)

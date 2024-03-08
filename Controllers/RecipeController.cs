@@ -74,20 +74,19 @@ namespace Projekt_Recept.Controllers
             User user = new User();
             try
             {
-
                 MySqlCommand command = Connection.CreateCommand();
                 command.Prepare();
                 command.CommandText = "SELECT UserName FROM user WHERE id = @id";
                 command.Parameters.AddWithValue("@id", id);
                 MySqlDataReader reader = command.ExecuteReader();
 
-                reader.Read();
+                if (reader.Read())
+                {
+                    user.UserName = reader.GetString("UserName");
+                }
 
-                user.UserName = reader.GetString("UserName");
                 reader.Close();
-
                 return user.UserName;
-
             }
             catch (Exception exception)
             {
@@ -104,7 +103,7 @@ namespace Projekt_Recept.Controllers
             {
                 MySqlCommand command = Connection.CreateCommand();
                 command.Prepare();
-                command.CommandText = "SELECT * FROM comments WHERE RecipeId = @RecipeId";
+                command.CommandText = "SELECT * FROM comment WHERE RecipeId = @RecipeId";
                 command.Parameters.AddWithValue("@RecipeId", RecipeId);
                 MySqlDataReader reader = command.ExecuteReader();
 
@@ -116,15 +115,10 @@ namespace Projekt_Recept.Controllers
                     comment.RecipeId = reader.GetUInt16("RecipeId");
                     comment.TimeStamp = reader.GetString("TimeStamp");
                     comment.Content = reader.GetString("Content");
+                    comment.UserName = reader.GetString("UserName");
                     comments.Add(comment);
                 }
                 reader.Close();
-
-                foreach(Comment comment in comments)
-                {
-                    comment.UserName = UserName(comment.UserId);
-                }
-
                 return comments;
             }
             catch(Exception exception)
@@ -166,40 +160,51 @@ namespace Projekt_Recept.Controllers
             } return categories;
         }
 
-        [HttpGet("{Id}")]
-        public ActionResult<Recipe> GetRecipeFromId(int Id)
+        [HttpGet("ViewRecipeById")]
+        public ActionResult<List<Recipe>> ViewRecipeById(int Id)
         {
-            List<Recipe> recipe = new List<Recipe>();
+            List<Recipe> recipes = new List<Recipe>();
+
             try
             {
                 Connection.Open();
-                MySqlCommand query = Connection.CreateCommand();
-                query.Prepare();
-                query.CommandText = "SELECT t1.`Id` AS RecipeId, t1.`UserId`, t1.`UserName`, t1.`Title`, GROUP_CONCAT(DISTINCT t3.`category` SEPARATOR ', ') AS Categories, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content`, COALESCE(t4.LikeCount, 0) AS LikeCount FROM `recipe` t1 LEFT JOIN `category` t3 ON t1.`Id` = t3.`RecipeId` LEFT JOIN (SELECT `RecipeId`, COUNT(`RecipeId`) AS LikeCount FROM `Likes` GROUP BY  `RecipeId`) t4 ON t1.`Id` = t4.`RecipeId` WHERE t1.`Id` = @Id GROUP BY t1.`Id`, t1.`UserId`, t1.`Username`, t1.`Title`, t1.`Ingredients`, t1.`Description`, t1.`ImageUrl`, t1.`TimeStamp`, t1.`Content` ORDER BY t1.`TimeStamp` DESC;";
-                query.Parameters.AddWithValue("@Id", Id);
-                MySqlDataReader data = query.ExecuteReader();
+                MySqlCommand command = Connection.CreateCommand();
+                command.Prepare();
+                command.CommandText = "SELECT t1.`Id`, t1.`UserId`, t1.`UserName`, `Title`, `Description`,`Ingredients`, `ImageUrl`, `TimeStamp`, `Content` FROM `recipe` t1 LEFT JOIN `user` t2 ON t1.UserId = t2.id";
+                command.Parameters.AddWithValue("@Id", Id);
+                MySqlDataReader data = command.ExecuteReader();
 
                 while (data.Read())
                 {
-                    Recipe recipes = new Recipe
-                    {
-                        Id = data.GetInt32("UserId"),
-                        UserName = data.GetString("UserName"),
-                        Title = data.GetString("Title"),
-                        Description = data.GetString("Description"),
-                        ImageUrl = data.GetString("ImageUrl"),
-                        TimeStamp = data.GetString("TimeStamp"),
-                        Content = data.GetString("Content")
-                        
-                    };
-                    recipe.Add(recipes);
+                    Recipe recipe = new Recipe();
+                    recipe.Id = data.GetInt32("Id");
+                    recipe.UserId = data.GetInt32("UserId");
+                    recipe.UserName = data.GetString("Username");
+                    recipe.Title = data.GetString("Title");
+                    recipe.Description = data.GetString("Description");
+                    recipe.Ingredients = data.GetString("Ingredients");
+                    recipe.ImageUrl = data.GetString("ImageUrl");
+                    recipe.TimeStamp = data.GetString("TimeStamp");
+                    recipe.Content = data.GetString("Content");
+                    recipes.Add(recipe);
                 }
+                data.Close();
+
+                foreach (Recipe recipe in recipes)
+                {
+                    recipe.comments = GetComments(recipe.Id);
+                    recipe.categories = GetCategories(recipe.Id);
+                    //recipe.LikeCount = GetLikes(recipe);
+                }
+
             }
-            catch (Exception ex)
+            catch (Exception exception)
             {
-                return StatusCode(500, ex.Message);
+                Connection.Close();
+                return StatusCode(500, exception.Message);
             }
-            return Ok(recipe);
+            Connection.Close();
+            return StatusCode(200, recipes);
         }
 
         [HttpDelete("DeleteRecipe")]
