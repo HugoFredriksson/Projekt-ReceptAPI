@@ -261,7 +261,7 @@ namespace Projekt_Recept.Controllers
             //string authorization = Request.Headers["Authorization"];
             //User user = (User)UserController.sessionId[authorization];
 
-            const string DIRECTORY = "C:\\Users\\Elev\\source\\repos\\Recept-Projekt\\public\\recipeImage\\";
+            const string DIRECTORY = "C:\\Users\\hugof\\Documents\\GitHub\\Projekt-Recept\\Projekt-Recept\\public\\recipeImage\\";
             recipe.imageUrl = recipe.imageUrl.Split(',')[1];
             byte[] data = Convert.FromBase64String(recipe.imageUrl);
             string randombase64 = generateRandomBase64String();

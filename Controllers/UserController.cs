@@ -155,6 +155,7 @@ namespace Projekt_Recept.Controllers
             {
                 return StatusCode(403, "0");
             }
+
             User user = (User)UserController.sessionId[auth];
             return StatusCode(200, user.id);
         }
