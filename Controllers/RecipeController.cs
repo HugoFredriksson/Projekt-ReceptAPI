@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ViewEngines;
 using MySql.Data.MySqlClient;
 using MySqlX.XDevAPI;
 using MySqlX.XDevAPI.Relational;
@@ -56,7 +57,7 @@ namespace Projekt_Recept.Controllers
                 {
                     recipe.comments = GetComments(recipe.Id);
                     recipe.categories = GetCategories(recipe.Id);
-                    //recipe.LikeCount = GetLikes(recipe);
+                    recipe.LikeCount = GetLikes(recipe);
                 }
 
             }
@@ -160,6 +161,29 @@ namespace Projekt_Recept.Controllers
             } return categories;
         }
 
+        private int GetLikes(Recipe recipe)
+        {
+            int likeCount = 0;
+            try
+            {
+                MySqlCommand command = Connection.CreateCommand();
+                command.Prepare(); //'like WHERE reviewId = 1' 
+                command.CommandText = "SELECT COUNT(UserId) AS likeCount FROM likes WHERE RecipeId = @RecipeId";
+                command.Parameters.AddWithValue("@RecipeId", recipe.Id);
+                MySqlDataReader data = command.ExecuteReader();
+                data.Read();
+                likeCount = data.GetInt32("likeCount");
+                data.Close();
+                Console.WriteLine("Lyckades hämta likes");
+            }
+            catch (Exception exception)
+            {
+                Console.WriteLine("Gick ej att hämta likes " + exception.Message);
+            }
+
+            return likeCount;
+        }
+
         [HttpGet("ViewRecipeById")]
         public ActionResult<List<Recipe>> ViewRecipeById(int Id)
         {
@@ -261,7 +285,7 @@ namespace Projekt_Recept.Controllers
             //string authorization = Request.Headers["Authorization"];
             //User user = (User)UserController.sessionId[authorization];
 
-            const string DIRECTORY = "C:\\Users\\hugof\\Documents\\GitHub\\Projekt-Recept\\Projekt-Recept\\public\\recipeImage\\";
+            const string DIRECTORY = "C:\\Users\\Elev\\source\\repos\\Recept-Projekt\\public\\recipeImage\\";
             recipe.imageUrl = recipe.imageUrl.Split(',')[1];
             byte[] data = Convert.FromBase64String(recipe.imageUrl);
             string randombase64 = generateRandomBase64String();
@@ -283,7 +307,8 @@ namespace Projekt_Recept.Controllers
                 MySqlCommand command = Connection.CreateCommand();
                 command.Prepare();
 
-                command.CommandText = "INSERT INTO `recipe` (`Title`, `Description`, `Ingredients`, `imageUrl`, `TimeStamp`, `Content`) VALUES (@Title, @Description, @Ingredients, @imageUrl, (SELECT CURRENT_TIMESTAMP), @Content)";
+                command.CommandText = "INSERT INTO `recipe` (`UserId`, `Title`, `Description`, `Ingredients`, `imageUrl`, `TimeStamp`, `Content`) VALUES (@UserId, @Title, @Description, @Ingredients, @imageUrl, (SELECT CURRENT_TIMESTAMP), @Content)";
+                command.Parameters.AddWithValue("@UserId", recipe.UserId);
                 command.Parameters.AddWithValue("@Title", recipe.title);
                 command.Parameters.AddWithValue("@Description", recipe.description);
                 command.Parameters.AddWithValue("@Ingredients", recipe.ingredients);

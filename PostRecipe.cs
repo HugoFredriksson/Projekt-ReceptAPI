@@ -2,6 +2,7 @@
 {
     public class PostRecipe
     {
+        public int UserId { get; set; }
         public string title {  get; set; } = string.Empty;
         public string content { get; set; } = string.Empty;
         public string description { get; set; } = string.Empty;
