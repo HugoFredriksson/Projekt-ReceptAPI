@@ -89,6 +89,9 @@ namespace Projekt_Recept.Controllers
                 return StatusCode(500, exception.Message);
             }
         }
+
+        
+
         [HttpGet("LogIn")]
         public ActionResult LogIn() // FUNKAR TYP :-)
         {
@@ -109,6 +112,7 @@ namespace Projekt_Recept.Controllers
                 {
                     passwordHash = data.GetString("Password");
                     user.id = data.GetInt32("Id");
+                    user.UserName = data.GetString("UserName");
                     user.Email = data.GetString("Email");
                     user.Role = data.GetInt32("Role");
                 }
@@ -132,6 +136,19 @@ namespace Projekt_Recept.Controllers
                 Console.WriteLine($"Login failed: {exception.Message}");
                 return StatusCode(500);
             }
+        }
+
+        [HttpGet("VerifyUserName")]
+        public ActionResult VerifyUserName()
+        {
+            string auth = this.HttpContext.Request.Headers["Authorization"];
+
+            if (auth == null || !UserController.sessionId.ContainsKey(auth))
+            {
+                return StatusCode(403, "0");
+            }
+            User user = (User)UserController.sessionId[auth];
+            return StatusCode(200, user.UserName);
         }
 
         [HttpGet("VerifyRole")]

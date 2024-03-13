@@ -84,8 +84,8 @@ namespace Projekt_Recept.Controllers
             public ActionResult CreateComment(Comment comment)
             {
                 //Checks if user is logged in
-                string authorization = Request.Headers["Authorization"];
-                User user = (User)UserController.sessionId[authorization];
+                //string authorization = Request.Headers["Authorization"];
+                //User user = (User)UserController.sessionId[authorization];
 
                 //Attempts to insert comment values into database
                 try
@@ -93,11 +93,12 @@ namespace Projekt_Recept.Controllers
                     Connection.Open();
                     MySqlCommand command = Connection.CreateCommand();
                     command.Prepare();
-                    command.CommandText = "INSERT INTO `comment` (`UserId`, `RecipeId`, `TimeStamp`, `Content`) VALUES(@UserId, @RecipeId, (SELECT CURRENT_TIMESTAMP), @Content);";
+                    command.CommandText = "INSERT INTO `comment` (`UserId`, `RecipeId`, `TimeStamp`, `Content`, `UserName`) VALUES(@UserId, @RecipeId, (SELECT CURRENT_TIMESTAMP), @Content, @UserName);";
                     command.Parameters.AddWithValue("@UserId", comment.UserId);
                     command.Parameters.AddWithValue("@RecipeId", comment.RecipeId);
                     command.Parameters.AddWithValue("@TimeStamp", comment.TimeStamp);
                     command.Parameters.AddWithValue("@Content", comment.Content);
+                command.Parameters.AddWithValue("@UserName", comment.UserName);
                     command.ExecuteNonQuery();
 
                     Connection.Close();
